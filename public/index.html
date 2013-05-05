@@ -1,0 +1,151 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8; initial-scale=1.0; user-scalable=no;" name="viewport"/>
+    <title>Seoul Tour in GPS</title>
+
+    <link href="/map.css" rel="stylesheet">
+
+    <script src="http://maps.google.com/maps?file=api&v=2&key=AIzaSyB4FlBliFBmgqVp7vWH1P3fqrnJycNHUhQ" type="text/javascript"></script>
+<!-- According to the Google Maps API Terms of Service you are required display a Google map when using the Google Maps API. see: http://code.google.com/apis/maps/terms.html -->
+<script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=true"></script>    
+
+<script type="text/javascript">
+
+    var my_lat, my_lon, geocoder, location1, location2, map, my_location;
+
+//여기서부터는 내위치찾는거
+function initialize() {
+
+  geocoder = new GClientGeocoder();
+
+  var mapOptions = {
+    zoom: 15,
+    mapTypeId: google.maps.MapTypeId.ROADMAP
+  };
+  map = new google.maps.Map(document.getElementById('map-canvas'),
+      mapOptions);
+
+  // Try HTML5 geolocation 여기에서 position.coords.latitude 이게 의심스러움ㅋㅋ
+  if(navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(function(position) {
+
+        my_lat = position.coords.latitude;
+       my_lon = position.coords.longitude;
+      
+        var pos = new google.maps.LatLng(position.coords.latitude,
+                                       position.coords.longitude);
+
+      var infowindow = new google.maps.InfoWindow({
+        
+
+        map: map,
+        position: pos,
+        content: '당신의 위치입니다.'
+      });
+
+      map.setCenter(pos);
+    }, function() {
+      handleNoGeolocation(true);
+    });
+  } else {
+    // Browser doesn't support Geolocation
+    handleNoGeolocation(false);
+  }
+}
+
+function handleNoGeolocation(errorFlag) {
+  if (errorFlag) {
+    var content = 'Error: The Geolocation service failed.';
+  } else {
+    var content = 'Error: Your browser doesn\'t support geolocation.';
+  }
+
+  var options = {
+    map: map,
+    position: new google.maps.LatLng(60, 105),
+    content: content
+  };
+
+  var infowindow = new google.maps.InfoWindow(options);
+  map.setCenter(options.position);
+}
+
+google.maps.event.addDomListener(window, 'load', initialize);
+
+
+
+
+//이밑에꺼는 거리계산하는거
+
+    function showLocation() {
+        geocoder.getLocations(document.forms[0].address1.value, function (response) {
+            if (!response || response.Status.code != 200)
+            {
+                alert("Sorry, we were unable to geocode the first address");
+            }
+            else
+            {
+                location1 = {lat: response.Placemark[0].Point.coordinates[1], lon: response.Placemark[0].Point.coordinates[0], address: response.Placemark[0].address};
+             calculateDistance(); 
+               // geocoder.getLocations(document.forms[0].address2.value, function (response) {
+                   // if (!response || response.Status.code != 200)
+                   // {
+                     //   alert("Sorry, we were unable to geocode the second address");
+                   // }
+                   // else
+                   // {
+                    //    location2 = {lat: response.Placemark[0].Point.coordinates[1], lon: response.Placemark[0].Point.coordinates[0], address: response.Placemark[0].address};
+    //                    calculateDistance();
+                   // }
+              //  });
+                
+            }
+        });
+    }
+    
+    function calculateDistance()
+    {
+        try
+        {
+            var glatlng1 = new GLatLng(location1.lat, location1.lon);
+            var glatlng2 = new GLatLng(my_lat, my_lon);
+            var miledistance = glatlng1.distanceFrom(glatlng2, 3959).toFixed(1);
+            var kmdistance = (miledistance * 1.609344).toFixed(1);
+
+            document.getElementById('results').innerHTML = '<strong> 당신이 가고싶은 곳의 주소: </strong>' + location1.address + '<br />' + '<br/>' + '<br /><strong>당신이 있는 곳부터의 거리: </strong>' + kmdistance + ' (km)';
+        }
+        catch (error)
+        {
+            alert(error);
+        }
+    }
+
+    </script>
+  </head>
+
+  <body onload="initialize()">
+
+    <div id="map-canvas"></div>  
+
+    <p>
+    GPS를 켜고, 당신의 위치를 사용하는 것을 허용해주세요.
+    <br>
+    위의 지도가 보이지 않으면 창을 새로고침해 주세요.
+    <br>
+    지도에 뜬 게 자신의 위치가 맞는지 확인하세요. 그게 틀리면 거리도 당연히 틀리겠죠?ㅋㅋ<br>
+
+    이제 빈칸에 당신이 가고 싶은 장소를 입력하세요.</p>
+
+    <form style="margin-left:10px;" action="#" onsubmit="showLocation(); return false;">
+      <p>
+        <input type="text" name="address1" value="" class="address_input" size="40" />
+        <input type="submit" name="find" value="거리 측정" />
+      </p>
+    </form>
+    <p id="results"></p>
+
+  </body>
+</html>
+
